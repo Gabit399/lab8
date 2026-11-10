@@ -1,0 +1,9 @@
+$kind: collection
+description: Run folders top to bottom. Created ids are stored in collection variables.
+variables:
+  baseUrl: http://localhost:8080
+  studentId: "1"
+  courseId: "1"
+  courseId2: "2"
+  gradeId: "1"
+  tempStudentId: "1"
