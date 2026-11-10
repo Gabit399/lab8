@@ -1,0 +1,39 @@
+$kind: http-example
+request:
+  url: "{{baseUrl}}/api/students/{{studentId}}/transcript"
+  method: POST
+response:
+  statusCode: 200
+  statusText: ""
+  headers:
+    Content-Type: application/json
+    Content-Length: "393"
+    Date: Mon, 09 Nov 2026 23:36:18 GMT
+    Keep-Alive: timeout=60
+    Connection: keep-alive
+  body:
+    type: json
+    content: |-
+      {
+        "studentId": 6,
+        "studentName": "Aruzhan Seitkali",
+        "email": "aruzhan.demo1@university.kz",
+        "major": "Software Engineering",
+        "enrollmentYear": 2023,
+        "courses": [
+          {
+            "courseId": 2,
+            "courseCode": "CSE220",
+            "courseName": "Database Systems",
+            "credits": 5,
+            "instructor": "Dr. Iskakova",
+            "score": 88,
+            "letterGrade": "B",
+            "gradedAt": "2026-11-10T04:33:22.096933"
+          }
+        ],
+        "totalCredits": 5,
+        "averageScore": 88,
+        "averageLetterGrade": "B"
+      }
+order: 1000

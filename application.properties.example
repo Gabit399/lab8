@@ -1,0 +1,26 @@
+# Template for the local .env file:  cp application.properties.example .env
+# The app loads .env automatically; real environment variables override it.
+# Never commit real passwords (.env is in .gitignore).
+# If psql is not on PATH, use the full path, e.g. /Library/PostgreSQL/17/bin/psql.
+
+# Used by psql when you run:  set -a; source .env; set +a
+PGPORT=5432
+PGPASSWORD=change_me
+
+
+STUDENT_DB_URL=jdbc:postgresql://localhost:5432/student_db
+STUDENT_DB_USERNAME=postgres
+STUDENT_DB_PASSWORD=change_me
+
+COURSE_DB_URL=jdbc:postgresql://localhost:5432/course_db
+COURSE_DB_USERNAME=postgres
+COURSE_DB_PASSWORD=change_me
+
+GRADE_DB_URL=jdbc:postgresql://localhost:5432/grade_db
+GRADE_DB_USERNAME=postgres
+GRADE_DB_PASSWORD=change_me
+
+# none | validate | update | create | create-drop
+JPA_DDL_AUTO=update
+JPA_SHOW_SQL=false
+SERVER_PORT=8080

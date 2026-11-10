@@ -1,0 +1,44 @@
+package com.example.lab8.config;
+
+import jakarta.persistence.EntityManagerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
+import org.springframework.orm.jpa.JpaTransactionManager;
+import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
+import org.springframework.transaction.PlatformTransactionManager;
+
+import javax.sql.DataSource;
+
+/**
+ * student_db: DataSource + EntityManagerFactory + TransactionManager.
+ * Only repositories in com.example.lab8.student.repository use this database.
+ */
+@Configuration
+@EnableJpaRepositories(
+        basePackages = "com.example.lab8.student.repository",
+        entityManagerFactoryRef = "studentEntityManagerFactory",
+        transactionManagerRef = "studentTransactionManager"
+)
+public class StudentDatabaseConfig {
+
+    @Bean
+    public DataSource studentDataSource(Environment env) {
+        return DatabaseConfigSupport.dataSource(env, "student");
+    }
+
+    @Bean
+    public LocalContainerEntityManagerFactoryBean studentEntityManagerFactory(
+            @Qualifier("studentDataSource") DataSource dataSource, Environment env) {
+        return DatabaseConfigSupport.entityManagerFactory(
+                dataSource, env, "student", "com.example.lab8.student.entity");
+    }
+
+    @Bean
+    public PlatformTransactionManager studentTransactionManager(
+            @Qualifier("studentEntityManagerFactory") EntityManagerFactory entityManagerFactory) {
+        return new JpaTransactionManager(entityManagerFactory);
+    }
+}

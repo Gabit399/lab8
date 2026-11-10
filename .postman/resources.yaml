@@ -1,0 +1,13 @@
+# Use this workspace to collaborate
+workspace:
+  id: 412f3c2e-4941-423f-88cb-543c5f482b91
+
+cloudResources:
+  collections:
+    ../postman/collections/Lab 8 - University Management System (3 databases): 116ac390-ec10-44a6-8af4-e72766db9e43
+
+# All resources in the `postman/` folder are automatically registered in Local View.
+# Point to additional files outside the `postman/` folder to register them individually. Example:
+#localResources:
+#  collections:
+#    - ../tests/E2E Test Collection/
