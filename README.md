@@ -258,11 +258,22 @@ Other risks to explain at the defense:
 
 ## 5. Testing with Postman
 
-1. Import `postman/Lab8_University_API.postman_collection.json`.
-2. Start the application, then run the collection with **Runner**, folders 1 to 5 in order.
-   Each request has a status-code test, and the ids of created records are saved to collection variables.
-3. The collection uses unique email and course codes (`*.postman@...`, `PM301`, `PM220`), so it does not clash
-   with the sample data. To run it a second time, reset the databases or change those values.
+1. Import `postman/Lab8_University_API.postman_collection.json` (34 requests, 7 folders).
+2. Start the application, then send the requests in folders **0 → 6** one by one, or run the whole collection with **Runner**.
+
+| Folder | What it shows |
+|---|---|
+| 0. Start | Health check; creates a new unique suffix `{{run}}` for this run |
+| 1. student_db | Create, get, update and list a student |
+| 2. course_db | Create two courses, update one, get and list |
+| 3. grade_db | Assign two grades (letter calculated by the server), update one (C → B), list the student's grades |
+| 4. ⭐ Transcript | Combines all three databases; the **Visualize** tab shows a transcript card |
+| 5. Errors | 400 validation / malformed JSON / bad id, 404 unknown student or course, 409 duplicates and blocked deletes |
+| 6. Cleanup | Deletes the grades first, then the student and the courses, so the databases stay as they were |
+
+- Every run uses a new suffix in emails and course codes, so the collection can be run **any number of times** without 409 clashes.
+- Created ids are saved to collection variables automatically (`studentId`, `courseId`, `courseId2`, `gradeId`, `gradeId2`).
+- The **Visualize** tab of every response shows lists as tables and errors as red cards with the field errors.
 
 ### Screenshots
 
