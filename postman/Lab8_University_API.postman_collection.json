@@ -2,143 +2,52 @@
   "info": {
     "name": "Lab 8 - University Management System (3 databases)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Demo collection for Lab 8. One Spring Boot app, three PostgreSQL databases (student_db, course_db, grade_db).\n\n**How to demo:** run the folders 0 → 6 top to bottom (or the whole collection in the Runner). Every run uses a new suffix `{{run}}`, so emails and course codes never clash and the demo can be repeated. Created ids are saved automatically. Open the **Visualize** tab to see tables, the transcript card and error cards."
+    "description": "Run folders top to bottom. Created ids are stored in collection variables."
   },
-  "event": [
-    {
-      "listen": "prerequest",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "// A unique suffix keeps emails and course codes unique, so the demo can be run again and again.",
-          "if (!pm.collectionVariables.get(\"run\")) {",
-          "    pm.collectionVariables.set(\"run\", String(Date.now()).slice(-6));",
-          "}"
-        ]
-      }
-    },
-    {
-      "listen": "test",
-      "script": {
-        "type": "text/javascript",
-        "exec": [
-          "const ct = pm.response.headers.get(\"Content-Type\") || \"\";",
-          "if (ct.includes(\"json\") && pm.response.text()) {",
-          "    const data = pm.response.json();",
-          "    const style = `<style>",
-          "      body{font-family:-apple-system,Segoe UI,sans-serif;padding:12px;color:#1f2937}",
-          "      table{border-collapse:collapse;width:100%;font-size:13px}",
-          "      th,td{border:1px solid #e5e7eb;padding:6px 8px;text-align:left}",
-          "      th{background:#f3f4f6}",
-          "      .err{border-left:6px solid #dc2626;background:#fef2f2;padding:12px 16px;border-radius:6px}",
-          "      .code{font-size:28px;font-weight:700;color:#dc2626}",
-          "    </style>`;",
-          "    if (pm.response.code >= 400 && data.status) {",
-          "        pm.visualizer.set(style + `",
-          "          <div class=\"err\">",
-          "            <div class=\"code\">{{status}} {{error}}</div>",
-          "            <p><b>message:</b> {{message}}</p>",
-          "            <p><b>path:</b> {{path}}</p>",
-          "            {{#if fieldErrors}}<table><tr><th>field</th><th>error</th></tr>",
-          "              {{#each fieldErrors}}<tr><td>{{@key}}</td><td>{{this}}</td></tr>{{/each}}",
-          "            </table>{{/if}}",
-          "          </div>`, data);",
-          "    } else if (Array.isArray(data) && data.length) {",
-          "        const cols = Object.keys(data[0]);",
-          "        pm.visualizer.set(style + `",
-          "          <p><b>{{rows.length}} rows</b></p>",
-          "          <table><tr>{{#each cols}}<th>{{this}}</th>{{/each}}</tr>",
-          "          {{#each rows}}<tr>{{#each this}}<td>{{this}}</td>{{/each}}</tr>{{/each}}</table>`,",
-          "          { cols, rows: data.map(r => cols.map(c => r[c])) });",
-          "    }",
-          "}"
-        ]
-      }
-    }
-  ],
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8080"
     },
     {
-      "key": "run",
-      "value": ""
-    },
-    {
       "key": "studentId",
-      "value": ""
+      "value": "1"
     },
     {
       "key": "courseId",
-      "value": ""
+      "value": "1"
     },
     {
       "key": "courseId2",
-      "value": ""
+      "value": "2"
     },
     {
       "key": "gradeId",
-      "value": ""
+      "value": "1"
     },
     {
-      "key": "gradeId2",
-      "value": ""
+      "key": "tempStudentId",
+      "value": "1"
     }
   ],
   "item": [
     {
-      "name": "0. Start",
-      "description": "Run this first. It checks that the app is up and creates a new unique suffix {{run}}.",
+      "name": "1. Students (student_db)",
       "item": [
         {
-          "name": "Start demo (health check)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students"
-              ]
-            },
-            "description": "App is running and connected to student_db. Open the **Visualize** tab to see the table."
-          },
+          "name": "Create student",
           "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.collectionVariables.set(\"run\", String(Date.now()).slice(-6));",
-                  "console.log(\"Demo run suffix:\", pm.collectionVariables.get(\"run\"));"
-                ]
-              }
-            },
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Returns a JSON array\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"studentId\", pm.response.json().id);"
                 ]
               }
             }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "1. student_db: Students",
-      "description": "CRUD on the `students` table. These requests touch **student_db** only.",
-      "item": [
-        {
-          "name": "Create student",
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -157,33 +66,58 @@
                 "students"
               ]
             },
-            "description": "Creates a student in **student_db**. The id is saved to `{{studentId}}`.",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Nurlanova\",\n  \"email\": \"aruzhan.{{run}}@uni.kz\",\n  \"major\": \"Computer Science\",\n  \"enrollmentYear\": 2023\n}",
+              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Seitkali\",\n  \"email\": \"aruzhan.postman@university.kz\",\n  \"major\": \"Computer Science\",\n  \"enrollmentYear\": 2023\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
+          }
+        },
+        {
+          "name": "List students",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"studentId\", pm.response.json().id);",
-                  "pm.test(\"Has generated id\", () => pm.expect(pm.response.json().id).to.be.a(\"number\"));"
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students"
+              ]
+            }
+          }
         },
         {
           "name": "Get student by id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -197,24 +131,22 @@
                 "students",
                 "{{studentId}}"
               ]
-            },
-            "description": ""
-          },
+            }
+          }
+        },
+        {
+          "name": "Update student",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Same student\", () => pm.expect(pm.response.json().firstName).to.eql(\"Aruzhan\"));"
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Update student (change major)",
+          ],
           "request": {
             "method": "PUT",
             "header": [
@@ -234,35 +166,39 @@
                 "{{studentId}}"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Nurlanova\",\n  \"email\": \"aruzhan.{{run}}@uni.kz\",\n  \"major\": \"Software Engineering\",\n  \"enrollmentYear\": 2023\n}",
+              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Seitkali\",\n  \"email\": \"aruzhan.postman@university.kz\",\n  \"major\": \"Software Engineering\",\n  \"enrollmentYear\": 2023\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
+          }
+        },
+        {
+          "name": "Create temporary student",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Major updated\", () => pm.expect(pm.response.json().major).to.eql(\"Software Engineering\"));"
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"tempStudentId\", pm.response.json().id);"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "List all students",
+          ],
           "request": {
-            "method": "GET",
-            "header": [],
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
             "url": {
               "raw": "{{baseUrl}}/api/students",
               "host": [
@@ -273,8 +209,139 @@
                 "students"
               ]
             },
-            "description": "Open **Visualize** to show the table."
-          },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Temp\",\n  \"lastName\": \"Student\",\n  \"email\": \"temp.postman@university.kz\",\n  \"enrollmentYear\": 2024\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Delete temporary student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/{{tempStudentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{tempStudentId}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Courses (course_db)",
+      "item": [
+        {
+          "name": "Create course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"courseId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseName\": \"Web Applications in Java Spring\",\n  \"courseCode\": \"PM301\",\n  \"credits\": 5,\n  \"instructor\": \"Dr. Akhmetov\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Create second course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"courseId2\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseName\": \"Database Systems\",\n  \"courseCode\": \"PM220\",\n  \"credits\": 5,\n  \"instructor\": \"Dr. Iskakova\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "List courses",
           "event": [
             {
               "listen": "test",
@@ -285,24 +352,10 @@
                 ]
               }
             }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "2. course_db: Courses",
-      "description": "CRUD on the `courses` table. These requests touch **course_db** only.",
-      "item": [
-        {
-          "name": "Create course: Databases",
+          ],
           "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
+            "method": "GET",
+            "header": [],
             "url": {
               "raw": "{{baseUrl}}/api/courses",
               "host": [
@@ -312,77 +365,22 @@
                 "api",
                 "courses"
               ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"courseName\": \"Database Systems\",\n  \"courseCode\": \"DB{{run}}\",\n  \"credits\": 5,\n  \"instructor\": \"Dr. Sadykov\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
             }
-          },
+          }
+        },
+        {
+          "name": "Update course",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"courseId\", pm.response.json().id);"
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Create course: Java",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"courseName\": \"Java Programming\",\n  \"courseCode\": \"JV{{run}}\",\n  \"credits\": 3,\n  \"instructor\": \"Dr. Omarova\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"courseId2\", pm.response.json().id);"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Update course (credits 3 → 4)",
+          ],
           "request": {
             "method": "PUT",
             "header": [
@@ -402,97 +400,36 @@
                 "{{courseId2}}"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseName\": \"Advanced Java Programming\",\n  \"courseCode\": \"JV{{run}}\",\n  \"credits\": 4,\n  \"instructor\": \"Dr. Omarova\"\n}",
+              "raw": "{\n  \"courseName\": \"Database Systems\",\n  \"courseCode\": \"PM220\",\n  \"credits\": 6,\n  \"instructor\": \"Dr. Iskakova\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Credits updated\", () => pm.expect(pm.response.json().credits).to.eql(4));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Get course by id",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses",
-                "{{courseId}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List all courses",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
-                ]
-              }
-            }
-          ]
+          }
         }
       ]
     },
     {
-      "name": "3. grade_db: Grades",
-      "description": "Grades live in **grade_db**. Before saving, the service checks that the student exists in student_db and the course exists in course_db (logical references, no foreign keys across databases).",
+      "name": "3. Grades (grade_db)",
       "item": [
         {
-          "name": "Assign grade: Databases = 92",
+          "name": "Assign grade",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) pm.collectionVariables.set(\"gradeId\", pm.response.json().id);"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -511,33 +448,30 @@
                 "grades"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 92\n}",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 94\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
+          }
+        },
+        {
+          "name": "Assign second grade",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"gradeId\", pm.response.json().id);",
-                  "pm.test(\"Letter grade A calculated by server\", () => pm.expect(pm.response.json().letterGrade).to.eql(\"A\"));"
+                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Assign grade: Java = 78",
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -556,78 +490,30 @@
                 "grades"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId2}},\n  \"score\": 78\n}",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId2}},\n  \"score\": 78.5\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
+          }
+        },
+        {
+          "name": "Get student grades",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 201\", () => pm.response.to.have.status(201));",
-                  "pm.collectionVariables.set(\"gradeId2\", pm.response.json().id);",
-                  "pm.test(\"Letter grade C\", () => pm.expect(pm.response.json().letterGrade).to.eql(\"C\"));"
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "Update grade: Java 78 → 85",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades/{{gradeId2}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades",
-                "{{gradeId2}}"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId2}},\n  \"score\": 85\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Letter changed C → B\", () => pm.expect(pm.response.json().letterGrade).to.eql(\"B\"));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Grades of the student",
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -642,30 +528,70 @@
                 "student",
                 "{{studentId}}"
               ]
-            },
-            "description": ""
-          },
+            }
+          }
+        },
+        {
+          "name": "Update grade",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "pm.test(\"Two grades\", () => pm.expect(pm.response.json()).to.have.lengthOf(2));"
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
                 ]
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/grades/{{gradeId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "grades",
+                "{{gradeId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 96\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         }
       ]
     },
     {
-      "name": "4. ⭐ Transcript (all 3 databases)",
-      "description": "The main cross-database endpoint. Open the **Visualize** tab.",
+      "name": "4. Transcript (all three databases)",
       "item": [
         {
           "name": "Get transcript",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "GET",
             "header": [],
@@ -680,76 +606,27 @@
                 "{{studentId}}",
                 "transcript"
               ]
-            },
-            "description": "1) student from **student_db** → 2) grades from **grade_db** → 3) courses from **course_db** (one `findAllById` query) → joined in GradeService and averaged."
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 200\", () => pm.response.to.have.status(200));",
-                  "",
-                  "const t = pm.response.json();",
-                  "pm.test(\"Transcript combines all three databases\", () => {",
-                  "    pm.expect(t.studentName, \"student_db\").to.be.a(\"string\");",
-                  "    pm.expect(t.courses, \"grade_db\").to.have.lengthOf(2);",
-                  "    pm.expect(t.courses[0].courseName, \"course_db\").to.be.a(\"string\");",
-                  "});",
-                  "pm.test(\"Average score and letter are calculated\", () => {",
-                  "    pm.expect(t.averageScore).to.eql(88.5);   // (92 + 85) / 2",
-                  "    pm.expect(t.averageLetterGrade).to.eql(\"B\");",
-                  "    pm.expect(t.totalCredits).to.eql(9);      // 5 + 4",
-                  "});",
-                  "pm.visualizer.set(`",
-                  "<style>",
-                  "  body{font-family:-apple-system,Segoe UI,sans-serif;padding:16px;color:#1f2937}",
-                  "  .card{border:1px solid #e5e7eb;border-radius:10px;padding:16px 20px;max-width:760px}",
-                  "  h2{margin:0 0 4px}",
-                  "  .muted{color:#6b7280;font-size:13px}",
-                  "  table{border-collapse:collapse;width:100%;margin:14px 0;font-size:14px}",
-                  "  th,td{border-bottom:1px solid #e5e7eb;padding:8px;text-align:left}",
-                  "  th{background:#f9fafb}",
-                  "  .badge{display:inline-block;min-width:22px;text-align:center;padding:2px 8px;border-radius:12px;color:#fff;font-weight:700}",
-                  "  .A{background:#16a34a}.B{background:#2563eb}.C{background:#ca8a04}.D{background:#ea580c}.F{background:#dc2626}",
-                  "  .sum{display:flex;gap:28px;font-size:15px}",
-                  "  .src{margin-top:14px;font-size:12px;color:#6b7280}",
-                  "  .db{display:inline-block;padding:1px 6px;border-radius:4px;background:#eef2ff;color:#3730a3;margin-right:4px}",
-                  "</style>",
-                  "<div class=\"card\">",
-                  "  <h2>🎓 {{studentName}}</h2>",
-                  "  <div class=\"muted\">ID {{studentId}} · {{email}} · {{major}} · enrolled {{enrollmentYear}}</div>",
-                  "  <table>",
-                  "    <tr><th>Code</th><th>Course</th><th>Instructor</th><th>Credits</th><th>Score</th><th>Grade</th></tr>",
-                  "    {{#each courses}}",
-                  "    <tr><td>{{courseCode}}</td><td>{{courseName}}</td><td>{{instructor}}</td>",
-                  "        <td>{{credits}}</td><td>{{score}}</td><td><span class=\"badge {{letterGrade}}\">{{letterGrade}}</span></td></tr>",
-                  "    {{/each}}",
-                  "  </table>",
-                  "  <div class=\"sum\">",
-                  "    <div>Total credits: <b>{{totalCredits}}</b></div>",
-                  "    <div>Average score: <b>{{averageScore}}</b></div>",
-                  "    <div>Average grade: <span class=\"badge {{averageLetterGrade}}\">{{averageLetterGrade}}</span></div>",
-                  "  </div>",
-                  "  <div class=\"src\">Data sources:",
-                  "    <span class=\"db\">student_db</span> name, email, major ·",
-                  "    <span class=\"db\">grade_db</span> scores ·",
-                  "    <span class=\"db\">course_db</span> course names, credits</div>",
-                  "</div>`, t);"
-                ]
-              }
             }
-          ]
+          }
         }
       ]
     },
     {
-      "name": "5. Error handling (400 / 404 / 409)",
-      "description": "Handled by GlobalExceptionHandler (@RestControllerAdvice). Open **Visualize** on each one.",
+      "name": "5. Error cases",
       "item": [
         {
-          "name": "400 · invalid student (validation)",
+          "name": "400 - invalid student body",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -768,324 +645,19 @@
                 "students"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"\",\n  \"email\": \"not-an-email\",\n  \"enrollmentYear\": 1800\n}",
+              "raw": "{\n  \"firstName\": \"\",\n  \"lastName\": \"X\",\n  \"email\": \"not-an-email\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));",
-                  "pm.test(\"Field errors listed\", () => pm.expect(pm.response.json().fieldErrors).to.have.property(\"email\"));"
-                ]
-              }
-            }
-          ]
+          }
         },
         {
-          "name": "400 · score above 100",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 150\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "400 · malformed JSON",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/students",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{ \"firstName\": \"Aruzhan\" \"lastName\": \"N\" }",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "400 · id is not a number",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/abc",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "abc"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "404 · student does not exist",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/999999",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "999999"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "404 · grade for unknown student (checked in student_db)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentId\": 999999,\n  \"courseId\": {{courseId}},\n  \"score\": 80\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "404 · grade for unknown course (checked in course_db)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": 999999,\n  \"score\": 80\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "404 · transcript of unknown student",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/999999/transcript",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "999999",
-                "transcript"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "409 · duplicate email",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/students",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students"
-              ]
-            },
-            "description": "",
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Nurlanova\",\n  \"email\": \"aruzhan.{{run}}@uni.kz\",\n  \"major\": \"Computer Science\",\n  \"enrollmentYear\": 2023\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            }
-          },
+          "name": "409 - duplicate email",
           "event": [
             {
               "listen": "test",
@@ -1096,10 +668,49 @@
                 ]
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/students",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstName\": \"Aruzhan\",\n  \"lastName\": \"Seitkali\",\n  \"email\": \"aruzhan.postman@university.kz\",\n  \"major\": \"Computer Science\",\n  \"enrollmentYear\": 2023\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         },
         {
-          "name": "409 · duplicate course code",
+          "name": "409 - duplicate course code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -1118,31 +729,30 @@
                 "courses"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"courseName\": \"Copy\",\n  \"courseCode\": \"DB{{run}}\",\n  \"credits\": 3,\n  \"instructor\": \"X\"\n}",
+              "raw": "{\n  \"courseName\": \"Web Applications in Java Spring\",\n  \"courseCode\": \"PM301\",\n  \"credits\": 5,\n  \"instructor\": \"Dr. Akhmetov\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
+          }
+        },
+        {
+          "name": "400 - score above 100",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
                 ]
               }
             }
-          ]
-        },
-        {
-          "name": "409 · second grade for same course",
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -1161,263 +771,61 @@
                 "grades"
               ]
             },
-            "description": "",
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 70\n}",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 101\n}",
               "options": {
                 "raw": {
                   "language": "json"
                 }
               }
             }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ]
+          }
         },
         {
-          "name": "409 · delete student who has grades",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/{{studentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "{{studentId}}"
-              ]
-            },
-            "description": "student_db cannot have a FK to grade_db, so StudentService checks grade_db first and blocks the delete."
-          },
+          "name": "400 - negative score",
           "event": [
             {
               "listen": "test",
               "script": {
                 "type": "text/javascript",
                 "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
                 ]
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/grades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "grades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": -5\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
         },
         {
-          "name": "409 · delete course that has grades",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses",
-                "{{courseId}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
-                ]
-              }
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "6. Cleanup (delete in the right order)",
-      "description": "Grades first, then the student and courses. Leaves the databases as they were.",
-      "item": [
-        {
-          "name": "Delete grade: Databases",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades/{{gradeId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades",
-                "{{gradeId}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete grade: Java",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/grades/{{gradeId2}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "grades",
-                "{{gradeId2}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete student (now allowed)",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/{{studentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "{{studentId}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete course: Databases",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses",
-                "{{courseId}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Delete course: Java",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/courses/{{courseId2}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "courses",
-                "{{courseId2}}"
-              ]
-            },
-            "description": ""
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test(\"Status is 204\", () => pm.response.to.have.status(204));"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Deleted student is gone (404)",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/students/{{studentId}}",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "api",
-                "students",
-                "{{studentId}}"
-              ]
-            },
-            "description": ""
-          },
+          "name": "404 - grade for nonexistent student",
           "event": [
             {
               "listen": "test",
@@ -1428,7 +836,265 @@
                 ]
               }
             }
-          ]
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/grades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "grades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": 999999,\n  \"courseId\": {{courseId}},\n  \"score\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - grade for nonexistent course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/grades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "grades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": 999999,\n  \"score\": 50\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "409 - duplicate grade for same course",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/grades",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "grades"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"studentId\": {{studentId}},\n  \"courseId\": {{courseId}},\n  \"score\": 60\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "404 - unknown student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/999999",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "999999"
+              ]
+            }
+          }
+        },
+        {
+          "name": "404 - transcript of unknown student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 404\", () => pm.response.to.have.status(404));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/999999/transcript",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "999999",
+                "transcript"
+              ]
+            }
+          }
+        },
+        {
+          "name": "409 - delete student who has grades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/{{studentId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "{{studentId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "409 - delete course that has grades",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 409\", () => pm.response.to.have.status(409));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/courses/{{courseId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "courses",
+                "{{courseId}}"
+              ]
+            }
+          }
+        },
+        {
+          "name": "400 - non-numeric id",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Status is 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/students/abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "students",
+                "abc"
+              ]
+            }
+          }
         }
       ]
     }
